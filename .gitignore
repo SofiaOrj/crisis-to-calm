@@ -1,0 +1,4 @@
+node_modules/
+stats.json
+.crisis-to-calm-stats.json
+*.exe
