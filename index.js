@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const __dirname = path.resolve();
-const statsFilePath = path.join(os.homedir(), '.crisis-to-calm-stats.json');
+const statsFilePath = path.join(__dirname, 'stats.json');
 
 const themes = { 
   '--forest': { baseHex: '#00FF00', symbol: '♣ ', bg: chalk.hex('#004400') },
@@ -45,8 +45,7 @@ function updateStats(cyclesCompleted) {
 
     try {
         if (fs.existsSync(statsFilePath)) {
-            const fileData = fs.readFileSync(statsFilePath, 'utf8');
-            if (fileData.trim()) stats = JSON.parse(fileData);
+            stats = JSON.parse(fs.readFileSync(statsFilePath, 'utf8'));
         }
 
         const oldRank = stats.rank;
@@ -65,14 +64,16 @@ function updateStats(cyclesCompleted) {
             } 
             // If it's a new day, check if it was yesterday
             else {
-                const yesterday = new Date();
-                yesterday.setDate(yesterday.getDate() - 1);
-                const yesterdayString = yesterday.toLocaleDateString();
+                const d = new Date();
+                d.setDate(d.getDate() - 1);
+                const yesterday = d.toISOString().split('T')[0];
 
-                if (stats.lastDate === yesterdayString) {
-                    stats.streak += 1; // Increment streak.
+                if (stats.lastDate === yesterday) {
+                    stats.streak += 1;
+                    console.log("Streak continued! New streak:", stats.streak);
                 } else {
-                    stats.streak = 1; // Reset to 1.
+                    stats.streak = 1;
+                    console.log("Streak reset to 1 (missed a day).");
                 }
             }
             stats.lastDate = today; // Mark today as the last breathing day
