@@ -7,7 +7,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const __dirname = path.resolve();
 const statsFilePath = path.join(os.homedir(), '.crisis-to-calm-stats.json');
 
 const themes = { 
