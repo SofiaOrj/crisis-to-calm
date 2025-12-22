@@ -210,6 +210,42 @@ function drawBox(size, currentTheme, step = 0) {
     console.log(display);
 };
 
+async function askWellness() {
+    console.log(chalk.bold.cyan("Before you go, how are you feeling now?"));
+    console.log(chalk.white("1. Better / Good"));
+    console.log(chalk.white("2. Still stressed / Bad"));
+    process.stdout.write(chalk.gray("\nPress 1 or 2: "));
+
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    const key = await new Promise(resolve => {
+        process.stdin.once('data', (data) => {
+            resolve(data.toString());
+        });
+    });
+
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
+
+    console.log("\n"); // Move to a new line after the keypress
+
+    if (key === '2') {
+        console.log(chalk.yellow("I'm sorry you're still feeling this way. ❤️"));
+        console.log(chalk.white("Perhaps try another session with ") + chalk.cyan("--deep") + chalk.white(" mode or a longer breath count?"));
+        console.log(chalk.white("\nIf you need immediate support, remember these resources:"));
+        console.log(chalk.bold.magenta("- Crisis Text Line: Text HOME to 741741"));
+        console.log(chalk.bold.magenta("- National Suicide Prevention Lifeline: 988"));
+        console.log(chalk.bold("\nYou don't have to carry it all alone."));
+    } else {
+        console.log(chalk.green("I'm so glad to hear that! ✨"));
+        console.log(chalk.white("Take that calm energy with you into the rest of your day."));
+    }
+    
+    console.log(chalk.bold.cyan("\nGoodbye for now!\n"));
+}
+
 function displayStats(finalStats) {
     if (finalStats.levelUp) {
         console.log("\n" + "⭐".repeat(20));
@@ -380,6 +416,8 @@ async function startBreathing() {
     const finalStats = updateStats(4); // Save progress
 
     displayStats(finalStats);
+
+    await askWellness();
 
     process.exit();
 }
