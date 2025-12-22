@@ -41,7 +41,7 @@ const message = [
 
 function updateStats(cyclesCompleted) {
     // Default starting point
-    let stats = { totalBreaths: 0, streak: 0, lastDate: null };
+    let stats = { totalBreaths: 0, streak: 0, lastDate: null, rank: "Baby Breather", icon: "🍼" };
 
     try {
         // Try to read existing stats
@@ -74,6 +74,10 @@ function updateStats(cyclesCompleted) {
         stats.totalBreaths += breathsEarned;
         stats.lastDate = today;
 
+        const levelData = getLevel(stats.totalBreaths);
+        stats.rank = levelData.rank;
+        stats.icon = levelData.icon;
+
         //Save it
         fs.writeFileSync(statsFilePath, JSON.stringify(stats, null, 2));
         return stats;
@@ -82,6 +86,18 @@ function updateStats(cyclesCompleted) {
         console.error("Error updating stats, resetting to defaults.");
         return stats; // Return the default object so the app doesn't crash
     }
+}
+
+function getLevel(totalBreaths) {
+    if (totalBreaths >= 10000) return { rank: "Zen Legend", icon: "🐉" };
+    else if (totalBreaths >= 5000) return { rank: "Calm Sage", icon: "🧘‍♂️" };
+    else if (totalBreaths >= 2500) return { rank: "Breath Master", icon: "🌪️" };
+    else if (totalBreaths >= 1000) return { rank: "Breath Royalty", icon: "👑" };
+    else if (totalBreaths >= 500) return { rank: "Steady Hand", icon: "🌊" };
+    else if (totalBreaths >= 250) return { rank: "Calm Apprentice", icon: "🍃" };
+    else if (totalBreaths >= 100) return { rank: "Calm Novice", icon: "🌿" };
+    else if (totalBreaths >= 50) return { rank: "Novice Breather", icon: "🌱" };
+    else return { rank: "Baby Breather", icon: "🍼" }
 }
 
 function getRainbowColor(step) {
@@ -232,7 +248,7 @@ async function startBreathing() {
             process.stdin.setRawMode(false);
             process.stdin.pause();
         }
-        console.log(chalk.magenta("\nDeep Focus complete. The world is waiting for you."));
+        console.log(chalk.magenta("\nDeep Focus complete. Now you can take on the world."));
     } else {
         console.log(chalk.magenta("\nGreat job. You are ready to go back now."));
     }
@@ -240,7 +256,8 @@ async function startBreathing() {
     const finalStats = updateStats(4); // Save progress
     console.log(chalk.bold.cyan("\n--- PROGRESS SAVED ---"));
     console.log(chalk.cyan("\nYour stats:"));
-    console.log(chalk.cyan(`\n🧘 Total breaths taken: ${finalStats.totalBreaths}`));
+    console.log(chalk.cyan(`🌟 Rank: ${finalStats.rank} ${finalStats.icon}`));
+    console.log(chalk.cyan(`🧘 Total breaths taken: ${finalStats.totalBreaths}`));
     console.log(chalk.cyan(`🔥Current Streak: ${finalStats.streak} days`));
     console.log(chalk.cyan("----------------------\n"));
     process.exit();
