@@ -50,7 +50,7 @@ function updateStats(cyclesCompleted) {
         }
 
         const oldRank = stats.rank;
-        const today = new Date().toLocaleDateString();
+        const today = new Date().toISOString().split('T')[0];
         const breathsEarned = cyclesCompleted * 4;
 
         // Update totals and streak
