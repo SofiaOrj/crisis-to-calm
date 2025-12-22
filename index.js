@@ -305,8 +305,8 @@ function displayHelp() {
 }
 
 async function startBreathing() {
-    const args = process.argv; // Get all command-line arguments
-    if (args.includes('--help') || args.includes('-h')) {
+    const args = process.argv; // Get all command line arguments
+    if (args.includes('--help') || args.includes('--h')) {
         displayHelp();
         process.exit();
     }
