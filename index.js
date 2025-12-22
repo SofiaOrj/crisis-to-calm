@@ -86,11 +86,36 @@ function drawBox(size, currentTheme, step = 0) {
 }
 
 async function startBreathing() {
-    const arg = process.argv[2]; // Get the first command-line argument
-    const theme = themes[arg] ? themes[arg] : themes['default'];
+    const args = process.argv; // Get all command-line arguments
+    const isDeep = args.includes('--deep');
+    const themeArg = args.find(a => a.startsWith('--') && a !== '--deep');
+    const theme = themes[themeArg] ? themes[themeArg] : themes['default'];
     console.clear();
     console.log(chalk.cyan("Ready? Let's take a moment for yourself.\n"));
     await sleep(2000);
+
+    if (isDeep) {
+        process.stdout.write('\x1B[?25l'); // Hide cursor
+        
+        if (typeof process.stdin.setRawMode === 'function') {
+            process.stdin.setRawMode(true);
+            process.stdin.resume();
+            process.stdin.setEncoding('utf8');
+
+            // Listen for the "Panic Exit" keys manually
+            process.stdin.on('data', (key) => {
+                if (key === '\u0003') { // This is the code for Ctrl + C
+                    // Run cleanup and exit
+                    process.stdout.write('\x1B[?25h');
+                    process.stdin.setRawMode(false);
+                    console.log(chalk.red("\n\nEmergency stop. Returning to normal."));
+                    process.exit();
+                }
+            });
+        }
+        console.log(chalk.bold.magenta("ENTERING DEEP FOCUS MODE..."));
+        await sleep(2000);
+    }
 
     for (let i = 0; i < 4; i++) { // Repeat the breathing cycle 4 times
         let randomMessage = message[Math.floor(Math.random() * message.length)];
@@ -132,7 +157,33 @@ async function startBreathing() {
     }
 
     console.clear();
-    console.log(chalk.magenta("Great job. You are ready to go back now."));
+
+    if (isDeep) {
+        process.stdout.write('\x07'); // System Beep
+        process.stdout.write('\x1B[?25h'); // Show cursor
+        if (typeof process.stdin.setRawMode === 'function') {
+            process.stdin.setRawMode(false);
+            process.stdin.pause();
+        }
+        console.log(chalk.magenta("\nDeep Focus complete. The world is waiting for you."));
+    } else {
+        console.log(chalk.magenta("\nGreat job. You are ready to go back now."));
+    }
+
+    process.exit();
 }
 
 startBreathing();
+
+process.on('SIGINT', () => {
+    // 1. Force the cursor to show back up
+    process.stdout.write('\x1B[?25h'); 
+    
+    // 2. Unlock the keyboard (Turn off Raw Mode)
+    if (typeof process.stdin.setRawMode === 'function') {
+        process.stdin.setRawMode(false);
+    }
+    
+    console.log(chalk.red("\n\n[EXIT] Emergency stop. Terminal restored."));
+    process.exit(); 
+});
