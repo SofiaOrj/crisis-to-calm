@@ -87,6 +87,9 @@ function drawBox(size, currentTheme, step = 0) {
 
 async function startBreathing() {
     const args = process.argv; // Get all command-line arguments
+    const timeArg = args.find(arg => /^--\d+$/.test(arg));
+    const customSeconds = timeArg ? parseInt(timeArg.replace('--', '')) : 4;
+    const frameSpeed = (customSeconds * 1000) / 10;
     const isDeep = args.includes('--deep');
     const themeArg = args.find(a => a.startsWith('--') && a !== '--deep');
     const theme = themes[themeArg] ? themes[themeArg] : themes['default'];
@@ -120,34 +123,34 @@ async function startBreathing() {
     for (let i = 0; i < 4; i++) { // Repeat the breathing cycle 4 times
         let randomMessage = message[Math.floor(Math.random() * message.length)];
         console.clear();
-        console.log(chalk.green("Step 1: Inhale..."));
+        console.log(chalk.green(`Step 1: Inhale... (${customSeconds}s)`));
         for (let size = 1; size <= 10; size++) {
             console.clear();
-            console.log(chalk.green("Step 1: Inhale..."));
+            console.log(chalk.green(`Step 1: Inhale... (${customSeconds}s)`));
             drawBox(size, theme, size);
             console.log(chalk.cyan.italic(randomMessage));
-            await sleep(400); // Wait half a second between "frames"
+            await sleep(frameSpeed); // Wait between each frame
         }
 
-        for (let sec = 4; sec > 0; sec--) { // Repeat the hold step 4 times
+        for (let sec = customSeconds; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
             console.log(chalk.blue(`Step 2: Hold... (${sec}s)`));
             drawBox(10, theme, 10);
             console.log(chalk.cyan.italic(randomMessage));
-            await sleep(1000); // Wait one second between each hold step
+            await sleep(1000);
         }
 
         console.clear();
-        console.log(chalk.yellow("Step 3: Exhale..."));
+        console.log(chalk.yellow(`Step 3: Exhale... (${customSeconds}s)`));
         for (let size = 10; size >= 1; size--) {
             console.clear();
-            console.log(chalk.yellow("Step 3: Exhale..."));
+            console.log(chalk.yellow(`Step 3: Exhale... (${customSeconds}s)`));
             drawBox(size, theme, size);
             console.log(chalk.cyan.italic(randomMessage));
-            await sleep(400); // Wait half a second between "frames"
+            await sleep(frameSpeed); // Wait between each frame
         }
 
-        for (let sec = 4; sec > 0; sec--) { // Repeat the hold step 4 times
+        for (let sec = customSeconds; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
             console.log(chalk.blue(`Step 4: Hold... (${sec}s)`));
             drawBox(1, theme, 1);
