@@ -238,8 +238,40 @@ function displayStats(finalStats) {
     }
 };
 
+function displayHelp() {
+    console.log(chalk.bold.green("\n🌿 CRISIS TO CALM - Manual"));
+    console.log(chalk.cyan("A mindful breathing tool for your terminal.\n"));
+
+    console.log(chalk.yellow("Usage:"));
+    console.log("  calm [themes] [options]\n");
+
+    console.log(chalk.yellow("Themes:"));
+    console.log(`  ${chalk.cyan("--forest")}           Calming Forest theme.`);
+    console.log(`  ${chalk.cyan("--ocean")}            Soothing Ocean theme.`);
+    console.log(`  ${chalk.cyan("--mountain")}      Peaceful Mountain theme.`);
+    console.log(`  ${chalk.cyan("--space")}              Cosmic Space theme.`);
+    console.log(`  ${chalk.cyan("--happy")}           Uplifting Happy theme.`);
+    console.log(`  ${chalk.cyan("--surprised")} Distracting Surprised theme.`);
+    console.log(`  ${chalk.cyan("--rainbow")}      Fun Rainbow effect theme.`);
+    console.log(`  ${chalk.cyan("--random")}           Picks a random theme.`);
+
+    console.log(chalk.yellow("Options:"));
+    console.log(`  ${chalk.cyan("--[number]")}   Set breath length in seconds (e.g., --6, --10). Default is 4.`);
+    console.log(`  ${chalk.cyan("--deep")}       Enter Deep Focus mode (hides cursor, system beeps).`);
+    console.log(`  ${chalk.cyan("--stats")}      View your rank, streak, and total breaths.`);
+    console.log(`  ${chalk.cyan("--reset")}      Clear all progress and start fresh.`);
+    console.log(`  ${chalk.cyan("--help")}       Show this help menu.\n`);
+
+    console.log(chalk.magenta("Example:"));
+    console.log("  calm --ocean --6 --deep\n");
+}
+
 async function startBreathing() {
     const args = process.argv; // Get all command-line arguments
+    if (args.includes('--help')) {
+        displayHelp();
+        process.exit();
+    }
     if (args.includes('--reset')) {
         await resetStats();
         process.exit();
@@ -251,9 +283,20 @@ async function startBreathing() {
     const timeArg = args.find(arg => /^--\d+$/.test(arg));
     const customSeconds = timeArg ? parseInt(timeArg.replace('--', '')) : 4;
     const frameSpeed = (customSeconds * 1000) / 10;
-    const isDeep = args.includes('--deep');
-    const themeArg = args.find(a => a.startsWith('--') && a !== '--deep');
-    const theme = themes[themeArg] ? themes[themeArg] : themes['default'];
+    const isRandom = args.includes('--random'); // Check for random flag
+    const isDeep = args.includes('--deep'); // Check for deep flag
+    let theme;
+    if (isRandom) {
+        // Get all theme names except 'default'
+        const themeKeys = Object.keys(themes).filter(k => k !== 'default');
+        const randomKey = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+        theme = themes[randomKey];
+        console.log(chalk.gray(`Random theme selected: ${randomKey}`));
+    } else {
+        // Your existing theme selection logic
+        const themeArg = args.find(a => a.startsWith('--') && a !== '--deep' && a !== '--random');
+        theme = themes[themeArg] ? themes[themeArg] : themes['default'];
+    }
     console.clear();
     console.log(chalk.cyan("Ready? Let's take a moment for yourself.\n"));
     await sleep(2000);
