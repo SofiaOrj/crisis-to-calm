@@ -4,14 +4,14 @@ import chalk from 'chalk';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const themes = {
-  '--forest': { color: chalk.greenBright, symbol: '♣ ', bg: chalk.green.dim },
-  '--ocean':  { color: chalk.blue,  symbol: '~ ', bg: chalk.blue.dim },
-  '--space':  { color: chalk.gray,  symbol: '* ', bg: chalk.gray.dim },
-  '--mountain': { color: chalk.red,   symbol: '▲ ', bg: chalk.red.dim },
-  '--happy':  { color: chalk.yellow, symbol: 'Ü ', bg: chalk.yellow.dim },
-  '--surprised': { color: chalk.magenta, symbol: 'ö ', bg: chalk.magenta.dim },
-  '--rainbow': { isRainbow: true, symbol: '• ', bg: chalk.white.dim },
+const themes = { 
+  '--forest': { baseHex: '#00FF00', symbol: '♣ ', bg: chalk.hex('#004400') },
+  '--ocean':  { baseHex: '#00D4FF', symbol: '~ ', bg: chalk.hex('#003344') },
+  '--mountain': { baseHex: '#FF4500', symbol: '▲ ', bg: chalk.hex('#441100') },
+  '--space':  { baseHex: '#AAAAAA', symbol: '* ', bg: chalk.hex('#333333') },
+  '--happy':  { baseHex: '#FFD700', symbol: 'Ü ', bg: chalk.hex('#443300') },
+  '--surprised': { baseHex: '#FF00FF', symbol: 'ö ', bg: chalk.hex('#440044') },
+  '--rainbow': { isRainbow: true, baseHex: '#FFFFFF', symbol: '• ', bg: chalk.white.dim },
   'default':  { color: chalk.white, symbol: 'ø ', bg: chalk.gray.dim }
 };
 
@@ -35,27 +35,41 @@ const message = [
 ]
 
 function getRainbowColor(step) {
-    // This creates a shifting effect by changing R, G, and B based on the step
+    // Creates a shifting effect by changing R, G, and B based on the step
     const r = Math.floor(127.5 * (Math.sin(step * 0.5) + 1));
     const g = Math.floor(127.5 * (Math.sin(step * 0.5 + 2) + 1));
     const b = Math.floor(127.5 * (Math.sin(step * 0.5 + 4) + 1));
     
-    // Chalk.rgb(r, g, b) is much more reliable!
+    // Return a Chalk color object with the calculated RGB values
     return chalk.rgb(r, g, b);
 }
 
+function hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+}
+
 function drawBox(size, currentTheme, step = 0) {
-    // 1. Safety check: use default if theme is missing
+    // Use default if theme is missing
     const theme = currentTheme || themes['default'];
     
-    // 2. Handle Rainbow colors vs Static colors
+    //Handle Rainbow colors
     let activeColor, ghostColor;
     if (theme.isRainbow) {
         activeColor = getRainbowColor(step);
         ghostColor = activeColor.dim; // Use the rainbow color but dimmed
     } else {
-        activeColor = theme.color;
-        ghostColor = theme.bg; // This uses the 'bg' you defined in your list
+        const intensity = 1.0 - ((size - 1) * 0.06);
+        const rgb = hexToRgb(theme.baseHex || '#FFFFFF');
+
+        activeColor = chalk.rgb(
+            Math.floor(rgb.r * intensity),
+            Math.floor(rgb.g * intensity),
+            Math.floor(rgb.b * intensity)
+        );
+        ghostColor = theme.bg || chalk.gray.dim; // Use the background color if provided, otherwise default to gray
     }
 
     const maxSize = 10; 
@@ -74,7 +88,7 @@ function drawBox(size, currentTheme, step = 0) {
             if (isInsideRow && isInsideCol) {
                 display += activeColor(theme.symbol);
             } else {
-                // 3. Use our calculated ghostColor
+                // Calculated ghostColor
                 display += ghostColor(". ");
             }
         }
@@ -123,38 +137,38 @@ async function startBreathing() {
     for (let i = 0; i < 4; i++) { // Repeat the breathing cycle 4 times
         let randomMessage = message[Math.floor(Math.random() * message.length)];
         console.clear();
-        console.log(chalk.green(`Step 1: Inhale... (${customSeconds}s)`));
+        console.log(chalk.hex(theme.baseHex)(`Step 1: Inhale... (${customSeconds}s)`));
         for (let size = 1; size <= 10; size++) {
             console.clear();
-            console.log(chalk.green(`Step 1: Inhale... (${customSeconds}s)`));
+            console.log(chalk.hex(theme.baseHex)(`Step 1: Inhale... (${customSeconds}s)`));
             drawBox(size, theme, size);
-            console.log(chalk.cyan.italic(randomMessage));
+            console.log(chalk.hex(theme.baseHex).italic(randomMessage));
             await sleep(frameSpeed); // Wait between each frame
         }
 
         for (let sec = customSeconds; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
-            console.log(chalk.blue(`Step 2: Hold... (${sec}s)`));
+            console.log(chalk.hex(theme.baseHex)(`Step 2: Hold... (${sec}s)`));
             drawBox(10, theme, 10);
-            console.log(chalk.cyan.italic(randomMessage));
+            console.log(chalk.hex(theme.baseHex).italic(randomMessage));
             await sleep(1000);
         }
 
         console.clear();
-        console.log(chalk.yellow(`Step 3: Exhale... (${customSeconds}s)`));
+        console.log(chalk.hex(theme.baseHex)(`Step 3: Exhale... (${customSeconds}s)`));
         for (let size = 10; size >= 1; size--) {
             console.clear();
-            console.log(chalk.yellow(`Step 3: Exhale... (${customSeconds}s)`));
+            console.log(chalk.hex(theme.baseHex)(`Step 3: Exhale... (${customSeconds}s)`));
             drawBox(size, theme, size);
-            console.log(chalk.cyan.italic(randomMessage));
+            console.log(chalk.hex(theme.baseHex).italic(randomMessage));
             await sleep(frameSpeed); // Wait between each frame
         }
 
         for (let sec = customSeconds; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
-            console.log(chalk.blue(`Step 4: Hold... (${sec}s)`));
+            console.log(chalk.hex(theme.baseHex)(`Step 4: Hold... (${sec}s)`));
             drawBox(1, theme, 1);
-            console.log(chalk.cyan.italic(randomMessage));
+            console.log(chalk.hex(theme.baseHex).italic(randomMessage));
             await sleep(1000); // Wait one second between each hold step
         }
     }
@@ -179,10 +193,10 @@ async function startBreathing() {
 startBreathing();
 
 process.on('SIGINT', () => {
-    // 1. Force the cursor to show back up
+    // Force the cursor to show back up
     process.stdout.write('\x1B[?25h'); 
     
-    // 2. Unlock the keyboard (Turn off Raw Mode)
+    // Unlock the keyboard
     if (typeof process.stdin.setRawMode === 'function') {
         process.stdin.setRawMode(false);
     }
