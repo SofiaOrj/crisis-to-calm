@@ -1,8 +1,13 @@
 #!/usr/bin/env node
 
 import chalk from 'chalk';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const statsFilePath = path.join(__dirname, 'stats.json');
 
 const themes = { 
   '--forest': { baseHex: '#00FF00', symbol: '♣ ', bg: chalk.hex('#004400') },
@@ -33,6 +38,51 @@ const message = [
     "It's ok to git checkout of work for a moment.",
     "Sometimes a system needs a RESTART. So do you."
 ]
+
+function updateStats(cyclesCompleted) {
+    // Default starting point
+    let stats = { totalBreaths: 0, streak: 0, lastDate: null };
+
+    try {
+        // Try to read existing stats
+        if (fs.existsSync(statsFilePath)) {
+            const fileData = fs.readFileSync(statsFilePath, 'utf8');
+            // Only parse if the file isn't empty
+            if (fileData.trim()) {
+                stats = JSON.parse(fileData);
+            }
+        }
+
+        const today = new Date().toLocaleDateString();
+        const breathsEarned = cyclesCompleted * 4;
+
+        //Update the streak
+        if (!stats.lastDate) {
+            stats.streak = 1;
+        } else if (stats.lastDate === today) {
+            // Already practiced today
+        } else {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (stats.lastDate === yesterday.toLocaleDateString()) {
+                stats.streak += 1;
+            } else {
+                stats.streak = 1; 
+            }
+        }
+
+        stats.totalBreaths += breathsEarned;
+        stats.lastDate = today;
+
+        //Save it
+        fs.writeFileSync(statsFilePath, JSON.stringify(stats, null, 2));
+        return stats;
+
+    } catch (error) {
+        console.error("Error updating stats, resetting to defaults.");
+        return stats; // Return the default object so the app doesn't crash
+    }
+}
 
 function getRainbowColor(step) {
     // Creates a shifting effect by changing R, G, and B based on the step
@@ -187,6 +237,12 @@ async function startBreathing() {
         console.log(chalk.magenta("\nGreat job. You are ready to go back now."));
     }
 
+    const finalStats = updateStats(4); // Save progress
+    console.log(chalk.bold.cyan("\n--- PROGRESS SAVED ---"));
+    console.log(chalk.cyan("\nYour stats:"));
+    console.log(chalk.cyan(`\n🧘 Total breaths taken: ${finalStats.totalBreaths}`));
+    console.log(chalk.cyan(`🔥Current Streak: ${finalStats.streak} days`));
+    console.log(chalk.cyan("----------------------\n"));
     process.exit();
 }
 
