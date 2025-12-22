@@ -55,13 +55,27 @@ function updateStats(cyclesCompleted) {
 
         // Update totals and streak
         if (breathsEarned > 0) {
+            // If it's the first time ever
             if (!stats.lastDate) {
                 stats.streak = 1;
-            } else if (stats.lastDate !== today) {
+            } 
+            // If they already breathed today, don't change the streak
+            else if (stats.lastDate === today) {
+                // Streak stays the same
+            } 
+            // If it's a new day, check if it was yesterday
+            else {
                 const yesterday = new Date();
                 yesterday.setDate(yesterday.getDate() - 1);
-                stats.streak = (stats.lastDate === yesterday.toLocaleDateString()) ? stats.streak + 1 : 1;
+                const yesterdayString = yesterday.toLocaleDateString();
+
+                if (stats.lastDate === yesterdayString) {
+                    stats.streak += 1; // Increment streak.
+                } else {
+                    stats.streak = 1; // Reset to 1.
+                }
             }
+            stats.lastDate = today; // Mark today as the last breathing day
         }
 
         stats.totalBreaths += breathsEarned;
