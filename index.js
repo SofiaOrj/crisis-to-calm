@@ -17,7 +17,7 @@ const themes = {
   '--happy':  { baseHex: '#FFD700', symbol: 'Ü ', bg: chalk.hex('#443300') },
   '--surprised': { baseHex: '#FF00FF', symbol: 'ö ', bg: chalk.hex('#440044') },
   '--rainbow': { isRainbow: true, baseHex: '#FFFFFF', symbol: '• ', bg: chalk.white.dim },
-  'default':  { color: chalk.white, symbol: 'ø ', bg: chalk.gray.dim }
+  'default':  { baseHex: '#FFFFFF', symbol: 'ø ', bg: chalk.gray.dim }
 };
 
 const message = [
@@ -37,56 +37,101 @@ const message = [
     "You are doing a great job.",
     "It's ok to git checkout of work for a moment.",
     "Sometimes a system needs a RESTART. So do you."
-]
+];
 
 function updateStats(cyclesCompleted) {
-    // Default starting point
     let stats = { totalBreaths: 0, streak: 0, lastDate: null, rank: "Baby Breather", icon: "🍼" };
 
     try {
-        // Try to read existing stats
         if (fs.existsSync(statsFilePath)) {
             const fileData = fs.readFileSync(statsFilePath, 'utf8');
-            // Only parse if the file isn't empty
-            if (fileData.trim()) {
-                stats = JSON.parse(fileData);
-            }
+            if (fileData.trim()) stats = JSON.parse(fileData);
         }
 
+        const oldRank = stats.rank;
         const today = new Date().toLocaleDateString();
         const breathsEarned = cyclesCompleted * 4;
 
-        //Update the streak
-        if (!stats.lastDate) {
-            stats.streak = 1;
-        } else if (stats.lastDate === today) {
-            // Already practiced today
-        } else {
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            if (stats.lastDate === yesterday.toLocaleDateString()) {
-                stats.streak += 1;
-            } else {
-                stats.streak = 1; 
+        // Update totals and streak
+        if (breathsEarned > 0) {
+            if (!stats.lastDate) {
+                stats.streak = 1;
+            } else if (stats.lastDate !== today) {
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+                stats.streak = (stats.lastDate === yesterday.toLocaleDateString()) ? stats.streak + 1 : 1;
             }
         }
 
         stats.totalBreaths += breathsEarned;
         stats.lastDate = today;
 
+        // Level Logic
         const levelData = getLevel(stats.totalBreaths);
         stats.rank = levelData.rank;
         stats.icon = levelData.icon;
+        const levelUp = oldRank !== stats.rank;
 
-        //Save it
+        // Progress Bar Calculation
+        const levels = [
+            { name: "Baby Breather", goal: 0 },
+            { name: "Novice Breather", goal: 50 },
+            { name: "Calm Novice", goal: 100 },
+            { name: "Calm Apprentice", goal: 250 },
+            { name: "Steady Hand", goal: 500 },
+            { name: "Breath Royalty", goal: 1000 },
+            { name: "Breath Master", goal: 2500 },
+            { name: "Calm Sage", goal: 5000 },
+            { name: "Zen Legend", goal: 10000 }
+        ];
+
+        const currentIdx = levels.findIndex(l => l.name === stats.rank);
+        const nextLevelObj = levels[currentIdx + 1] || null;
+
         fs.writeFileSync(statsFilePath, JSON.stringify(stats, null, 2));
-        return stats;
+
+        // RETURN EVERYTHING
+        return { 
+            ...stats, 
+            levelUp, 
+            nextLevelName: nextLevelObj ? nextLevelObj.name : "Max Level", 
+            nextLevelGoal: nextLevelObj ? nextLevelObj.goal : stats.totalBreaths 
+        };
 
     } catch (error) {
-        console.error("Error updating stats, resetting to defaults.");
-        return stats; // Return the default object so the app doesn't crash
+        return { ...stats, levelUp: false, nextLevelName: "Error", nextLevelGoal: 100 };
     }
-}
+};
+
+async function resetStats() {
+    console.log(chalk.red.bold("\n⚠️  WARNING: This will delete all your stats, rank, and streaks."));
+    process.stdout.write(chalk.white("Are you sure? (y/n): "));
+
+    // Prepare the terminal to listen for one character
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.setEncoding('utf8');
+
+    // Wait for the keypress
+    const key = await new Promise(resolve => {
+        process.stdin.once('data', (data) => {
+            resolve(data.toString().toLowerCase());
+        });
+    });
+
+    // Immediately return terminal to normal mode
+    process.stdin.setRawMode(false);
+    process.stdin.pause();
+
+    if (key === 'y') {
+        if (fs.existsSync(statsFilePath)) {
+            fs.unlinkSync(statsFilePath);
+        }
+        console.log(chalk.green("\n\n✅ Stats have been reset. Start fresh whenever you're ready."));
+    } else {
+        console.log(chalk.yellow("\n\nReset cancelled. Your progress is safe."));
+    }
+};
 
 function getLevel(totalBreaths) {
     if (totalBreaths >= 10000) return { rank: "Zen Legend", icon: "🐉" };
@@ -98,7 +143,7 @@ function getLevel(totalBreaths) {
     else if (totalBreaths >= 100) return { rank: "Calm Novice", icon: "🌿" };
     else if (totalBreaths >= 50) return { rank: "Novice Breather", icon: "🌱" };
     else return { rank: "Baby Breather", icon: "🍼" }
-}
+};
 
 function getRainbowColor(step) {
     // Creates a shifting effect by changing R, G, and B based on the step
@@ -108,14 +153,14 @@ function getRainbowColor(step) {
     
     // Return a Chalk color object with the calculated RGB values
     return chalk.rgb(r, g, b);
-}
+};
 
 function hexToRgb(hex) {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return { r, g, b };
-}
+};
 
 function drawBox(size, currentTheme, step = 0) {
     // Use default if theme is missing
@@ -163,10 +208,46 @@ function drawBox(size, currentTheme, step = 0) {
 
     display += "\n"; 
     console.log(display);
-}
+};
+
+function displayStats(finalStats) {
+    if (finalStats.levelUp) {
+        console.log("\n" + "⭐".repeat(20));
+        console.log(chalk.bold.yellow(`LEVEL UP: You are now a ${finalStats.rank.toUpperCase()} 🥳!`));
+        console.log(chalk.cyan(`Your journey into mindfulness is growing...`));
+        console.log("⭐".repeat(20) + "\n");
+
+        process.stdout.write('\x07');
+            setTimeout(() => process.stdout.write('\x07'), 200);
+            setTimeout(() => process.stdout.write('\x07'), 400);
+    }
+
+    console.log(chalk.bold.cyan("\n--- PROGRESS SAVED ---"));
+    console.log(chalk.cyan("\nYour stats:"));
+    console.log(chalk.cyan(`🌟 Rank: ${finalStats.rank} ${finalStats.icon}`));
+    console.log(chalk.cyan(`🧘 Total breaths taken: ${finalStats.totalBreaths}`));
+    console.log(chalk.cyan(`🔥 Current Streak: ${finalStats.streak} days`));
+    console.log(chalk.cyan("----------------------\n"));
+
+    if (finalStats.nextLevelName && finalStats.nextLevelGoal) {
+        const progressPercent = Math.min((finalStats.totalBreaths / finalStats.nextLevelGoal) * 100, 100);
+        const bar = "■".repeat(Math.round(progressPercent / 10)) + ".".repeat(10 - Math.round(progressPercent / 10));
+        console.log(chalk.magenta(`\nNext Level: ${finalStats.nextLevelName} (${finalStats.nextLevelGoal} breaths)`));
+        console.log(chalk.gray(`[${bar}] ${progressPercent.toFixed(1)}%`));
+        console.log(chalk.magenta("------------------------\n"));
+    }
+};
 
 async function startBreathing() {
     const args = process.argv; // Get all command-line arguments
+    if (args.includes('--reset')) {
+        await resetStats();
+        process.exit();
+    }
+    if (args.includes('--stats')) {
+        displayStats(updateStats(0)); // Display stats without updating
+        process.exit();
+    }
     const timeArg = args.find(arg => /^--\d+$/.test(arg));
     const customSeconds = timeArg ? parseInt(timeArg.replace('--', '')) : 4;
     const frameSpeed = (customSeconds * 1000) / 10;
@@ -254,12 +335,9 @@ async function startBreathing() {
     }
 
     const finalStats = updateStats(4); // Save progress
-    console.log(chalk.bold.cyan("\n--- PROGRESS SAVED ---"));
-    console.log(chalk.cyan("\nYour stats:"));
-    console.log(chalk.cyan(`🌟 Rank: ${finalStats.rank} ${finalStats.icon}`));
-    console.log(chalk.cyan(`🧘 Total breaths taken: ${finalStats.totalBreaths}`));
-    console.log(chalk.cyan(`🔥Current Streak: ${finalStats.streak} days`));
-    console.log(chalk.cyan("----------------------\n"));
+
+    displayStats(finalStats);
+
     process.exit();
 }
 
