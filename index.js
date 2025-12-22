@@ -4,6 +4,17 @@ import chalk from 'chalk';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
+const themes = {
+  '--forest': { color: chalk.greenBright, symbol: '♣ ', bg: chalk.green.dim },
+  '--ocean':  { color: chalk.blue,  symbol: '~ ', bg: chalk.blue.dim },
+  '--space':  { color: chalk.gray,  symbol: '* ', bg: chalk.gray.dim },
+  '--mountain': { color: chalk.red,   symbol: '▲ ', bg: chalk.red.dim },
+  '--happy':  { color: chalk.yellow, symbol: 'Ü ', bg: chalk.yellow.dim },
+  '--surprised': { color: chalk.magenta, symbol: 'ö ', bg: chalk.magenta.dim },
+  '--rainbow': { isRainbow: true, symbol: '• ', bg: chalk.white.dim },
+  'default':  { color: chalk.white, symbol: 'ø ', bg: chalk.gray.dim }
+};
+
 const message = [
     "Take a second to just be here.",
     "Let go of all your worries and stress.",
@@ -23,15 +34,37 @@ const message = [
     "Sometimes a system needs a RESTART. So do you."
 ]
 
-function drawBox(size) {
+function getRainbowColor(step) {
+    // This creates a shifting effect by changing R, G, and B based on the step
+    const r = Math.floor(127.5 * (Math.sin(step * 0.5) + 1));
+    const g = Math.floor(127.5 * (Math.sin(step * 0.5 + 2) + 1));
+    const b = Math.floor(127.5 * (Math.sin(step * 0.5 + 4) + 1));
+    
+    // Chalk.rgb(r, g, b) is much more reliable!
+    return chalk.rgb(r, g, b);
+}
+
+function drawBox(size, currentTheme, step = 0) {
+    // 1. Safety check: use default if theme is missing
+    const theme = currentTheme || themes['default'];
+    
+    // 2. Handle Rainbow colors vs Static colors
+    let activeColor, ghostColor;
+    if (theme.isRainbow) {
+        activeColor = getRainbowColor(step);
+        ghostColor = activeColor.dim; // Use the rainbow color but dimmed
+    } else {
+        activeColor = theme.color;
+        ghostColor = theme.bg; // This uses the 'bg' you defined in your list
+    }
+
     const maxSize = 10; 
-    const sideMargin = 10; // Increase this number to move the box further right
-    let display = "\n".repeat(2); // Top margin
+    const sideMargin = 10; 
+    let display = "\n".repeat(2); 
 
     const offset = Math.floor((maxSize - size) / 2);
 
     for (let row = 0; row < maxSize; row++) {
-        // This line adds the margin to the left of the box
         display += " ".repeat(sideMargin); 
         
         for (let col = 0; col < maxSize; col++) {
@@ -39,9 +72,10 @@ function drawBox(size) {
             const isInsideCol = col >= offset && col < offset + size;
 
             if (isInsideRow && isInsideCol) {
-                display += chalk.white("* "); 
+                display += activeColor(theme.symbol);
             } else {
-                display += chalk.gray(". "); 
+                // 3. Use our calculated ghostColor
+                display += ghostColor(". ");
             }
         }
         display += "\n";
@@ -52,6 +86,8 @@ function drawBox(size) {
 }
 
 async function startBreathing() {
+    const arg = process.argv[2]; // Get the first command-line argument
+    const theme = themes[arg] ? themes[arg] : themes['default'];
     console.clear();
     console.log(chalk.cyan("Ready? Let's take a moment for yourself.\n"));
     await sleep(2000);
@@ -63,16 +99,16 @@ async function startBreathing() {
         for (let size = 1; size <= 10; size++) {
             console.clear();
             console.log(chalk.green("Step 1: Inhale..."));
-            drawBox(size);
-            console.log(chalk.cyan.bold(randomMessage));
+            drawBox(size, theme, size);
+            console.log(chalk.cyan.italic(randomMessage));
             await sleep(400); // Wait half a second between "frames"
         }
 
         for (let sec = 4; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
             console.log(chalk.blue(`Step 2: Hold... (${sec}s)`));
-            drawBox(10);
-            console.log(chalk.cyan.bold(randomMessage));
+            drawBox(10, theme, 10);
+            console.log(chalk.cyan.italic(randomMessage));
             await sleep(1000); // Wait one second between each hold step
         }
 
@@ -81,16 +117,16 @@ async function startBreathing() {
         for (let size = 10; size >= 1; size--) {
             console.clear();
             console.log(chalk.yellow("Step 3: Exhale..."));
-            drawBox(size);
-            console.log(chalk.cyan.bold(randomMessage));
+            drawBox(size, theme, size);
+            console.log(chalk.cyan.italic(randomMessage));
             await sleep(400); // Wait half a second between "frames"
         }
 
         for (let sec = 4; sec > 0; sec--) { // Repeat the hold step 4 times
             console.clear();
             console.log(chalk.blue(`Step 4: Hold... (${sec}s)`));
-            drawBox(1);
-            console.log(chalk.cyan.bold(randomMessage));
+            drawBox(1, theme, 1);
+            console.log(chalk.cyan.italic(randomMessage));
             await sleep(1000); // Wait one second between each hold step
         }
     }
