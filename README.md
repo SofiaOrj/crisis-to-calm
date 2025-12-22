@@ -32,6 +32,14 @@ npm install
 npm link
 ```
 
+### Using .exe file
+- Navigate to releases and download calm.exe
+- To run the default version, open calm.exe
+- To run with flags:
+  - Navigate to the folder where calm.exe is located
+  - Type `.\calm.exe` and add any flags (ex. `--forest --6 --deep`)
+  - Run
+
 ## Usage
 
 Simply type `calm` to start a standard session, or use flags to customize your experience:
