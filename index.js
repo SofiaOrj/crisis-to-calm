@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import os from 'os';
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
@@ -7,7 +8,7 @@ import { fileURLToPath } from 'url';
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const statsFilePath = path.join(__dirname, 'stats.json');
+const statsFilePath = path.join(os.homedir(), '.crisis-to-calm-stats.json');
 
 const themes = { 
   '--forest': { baseHex: '#00FF00', symbol: '♣ ', bg: chalk.hex('#004400') },
