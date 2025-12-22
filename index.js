@@ -282,14 +282,14 @@ function displayHelp() {
     console.log("  calm [themes] [options]\n");
 
     console.log(chalk.yellow("Themes:"));
-    console.log(`  ${chalk.cyan("--forest")}           Calming Forest theme.`);
-    console.log(`  ${chalk.cyan("--ocean")}            Soothing Ocean theme.`);
-    console.log(`  ${chalk.cyan("--mountain")}      Peaceful Mountain theme.`);
-    console.log(`  ${chalk.cyan("--space")}              Cosmic Space theme.`);
-    console.log(`  ${chalk.cyan("--happy")}           Uplifting Happy theme.`);
-    console.log(`  ${chalk.cyan("--surprised")} Distracting Surprised theme.`);
-    console.log(`  ${chalk.cyan("--rainbow")}      Fun Rainbow effect theme.`);
-    console.log(`  ${chalk.cyan("--random")}           Picks a random theme.`);
+    console.log(`  ${chalk.cyan("--forest")}         Calming Forest theme.`);
+    console.log(`  ${chalk.cyan("--ocean")}          Soothing Ocean theme.`);
+    console.log(`  ${chalk.cyan("--mountain")}       Peaceful Mountain theme.`);
+    console.log(`  ${chalk.cyan("--space")}          Cosmic Space theme.`);
+    console.log(`  ${chalk.cyan("--happy")}          Uplifting Happy theme.`);
+    console.log(`  ${chalk.cyan("--surprised")}      Distracting Surprised theme.`);
+    console.log(`  ${chalk.cyan("--rainbow")}        Fun Rainbow effect theme.`);
+    console.log(`  ${chalk.cyan("--random")}         Picks a random theme.`);
 
     console.log(chalk.yellow("Options:"));
     console.log(`  ${chalk.cyan("--[number]")}   Set breath length in seconds (e.g., --6, --10). Default is 4.`);
@@ -297,6 +297,7 @@ function displayHelp() {
     console.log(`  ${chalk.cyan("--stats")}      View your rank, streak, and total breaths.`);
     console.log(`  ${chalk.cyan("--reset")}      Clear all progress and start fresh.`);
     console.log(`  ${chalk.cyan("--help")}       Show this help menu.\n`);
+    console.log(`  ${chalk.cyan("--h")}          Show this help menu.\n`);
 
     console.log(chalk.magenta("Example:"));
     console.log("  calm --ocean --6 --deep\n");
@@ -304,7 +305,7 @@ function displayHelp() {
 
 async function startBreathing() {
     const args = process.argv; // Get all command-line arguments
-    if (args.includes('--help')) {
+    if (args.includes('--help') || args.includes('-h')) {
         displayHelp();
         process.exit();
     }
@@ -321,16 +322,20 @@ async function startBreathing() {
     const frameSpeed = (customSeconds * 1000) / 10;
     const isRandom = args.includes('--random'); // Check for random flag
     const isDeep = args.includes('--deep'); // Check for deep flag
+    const functionalFlags = ['--deep', '--random', '--stats', '--reset', '--help', '-h'];
     let theme;
     if (isRandom) {
-        // Get all theme names except 'default'
         const themeKeys = Object.keys(themes).filter(k => k !== 'default');
         const randomKey = themeKeys[Math.floor(Math.random() * themeKeys.length)];
         theme = themes[randomKey];
         console.log(chalk.gray(`Random theme selected: ${randomKey}`));
     } else {
-        // Your existing theme selection logic
-        const themeArg = args.find(a => a.startsWith('--') && a !== '--deep' && a !== '--random');
+        // 2. Find an argument that starts with '--', isn't a number, and isn't a functional flag
+        const themeArg = args.find(arg => 
+            arg.startsWith('--') && 
+            !/^--\d+$/.test(arg) && // Ignore things like --6 or --10
+            !functionalFlags.includes(arg)
+        );
         theme = themes[themeArg] ? themes[themeArg] : themes['default'];
     }
     console.clear();
