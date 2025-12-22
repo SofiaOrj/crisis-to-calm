@@ -12,9 +12,24 @@ A mindful breathing tool for your terminal. Designed to help developers reset, r
 ## Installation
 
 ### Using NPM (Recommended)
+- Prerequisite: Node.js
 ```bash
 npm install -g crisis-to-calm
+```
 
+### From source
+- Close the repository
+- Enter directory
+```bash
+cd crisis-to-calm
+```
+- Install dependencies
+```bash
+npm install
+```
+- Link command
+```bash
+npm link
 ```
 
 ## Usage
