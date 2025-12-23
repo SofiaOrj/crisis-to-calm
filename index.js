@@ -6,8 +6,12 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-const __dirname = path.resolve();
+// const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+// const __dirname = path.resolve();
+// const statsFilePath = path.join(__dirname, 'stats.json');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const statsFilePath = path.join(__dirname, 'stats.json');
 
 const themes = { 
